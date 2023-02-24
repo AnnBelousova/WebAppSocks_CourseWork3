@@ -6,9 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Data
 @EqualsAndHashCode(of = {"color", "size", "cottonPart"})
@@ -22,7 +20,7 @@ public class Sock {
     @Max(100)
     @NotNull(message = "Процент хлопка должен быть от 0% до 100%")
     private int cottonPart;
-    @Positive
+    @PositiveOrZero
     private int quantity;
     private List<Transaction> transactions;
 }

@@ -44,60 +44,72 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public Sock addSocks(Sock sock) {
-        List<Transaction> transactions = new ArrayList<>();
-        transactions.add(new Transaction(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), Type.IN, sock.getQuantity()));
-        Sock sockAdd = new Sock(sock.getColor(), sock.getSize(), sock.getCottonPart(), sock.getQuantity(), transactions);
-        socksMap.put(id++, sockAdd);
+        if (!socksMap.containsValue(sock)) {
+            List<Transaction> transactions = new ArrayList<>();
+            Transaction transactionNew = new Transaction();
+            transactionNew.setDateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            transactionNew.setType(Type.IN);
+            transactionNew.setQuantity(sock.getQuantity());
+            transactions.add(transactionNew);
+            sock.setTransactions(transactions);
+            socksMap.put(id, sock);
+            id++;
+        } else {
+            for (Map.Entry<Long, Sock> s : socksMap.entrySet()) {
+                if (s.getValue().getColor().equals(sock.getColor())
+                        && s.getValue().getSize().equals(sock.getSize())
+                        && s.getValue().getCottonPart() == sock.getCottonPart()) {
+                    long key = s.getKey();
+                    if (socksMap.containsKey(key)) {
+                        int qtn = s.getValue().getQuantity() + sock.getQuantity();
+                        List<Transaction> transactions = s.getValue().getTransactions();
+                        Transaction transaction = new Transaction();
+                        transaction.setDateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                        transaction.setType(Type.IN);
+                        transaction.setQuantity(sock.getQuantity());
+                        transactions.add(transaction);
+                        sock.setQuantity(qtn);
+                        sock.setTransactions(transactions);
+                        socksMap.put(key, sock);
+                    }
+                }
+            }
+        }
+
         saveData();
         return sock;
     }
 
     @Override
-    public void updateSocks(Color color, Size size, int cottonPart, int quantity) {
-        for (Map.Entry<Long, Sock> s : socksMap.entrySet()) {
-            if (s.getValue().getColor().equals(color)
-                    && s.getValue().getSize().equals(size)
-                    && s.getValue().getCottonPart() == cottonPart) {
-                int qtn = s.getValue().getQuantity() + quantity;
-                List<Transaction> transactions = s.getValue().getTransactions();
-                transactions.add(new Transaction(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), Type.IN, quantity));
-                long key = s.getKey();
-                socksMap.put(key, new Sock(color, size, cottonPart, qtn, transactions));
-                saveData();
-            } else {
-                throw new NotFoundException("Таких носков нет на складе");
+    public void transferSockFromWarehouse(Sock sock) {
+        if (socksMap.containsValue(sock)) {
+            for (Map.Entry<Long, Sock> s : socksMap.entrySet()) {
+                if (s.getValue().getColor().equals(sock.getColor())
+                        && s.getValue().getSize().equals(sock.getSize())
+                        && s.getValue().getCottonPart() == sock.getCottonPart()
+                        && s.getValue().getQuantity() >= sock.getQuantity()) {
+                    int qtn = s.getValue().getQuantity() - sock.getQuantity();
+                    List<Transaction> transactions = s.getValue().getTransactions();
+                    id = s.getKey();
+                    Transaction transaction = new Transaction();
+                    transaction.setDateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    transaction.setType(Type.OUT);
+                    transaction.setQuantity(sock.getQuantity());
+                    transactions.add(transaction);
+                    sock.setQuantity(qtn);
+                    sock.setTransactions(transactions);
+                    socksMap.put(id, sock);
+                }
             }
+        } else {
+            throw new NotFoundException("Таких носков нет на складе");
         }
+        saveData();
     }
 
 
     @Override
-    public Collection<Sock> getSocks() {
-        return socksMap.values();
-    }
-
-    @Override
-    public void transferSockFromWarehouse(Color color, Size size, int cottonPart, int quantity) {
-        for (Map.Entry<Long, Sock> s : socksMap.entrySet()) {
-            if (s.getValue().getColor().equals(color)
-                    && s.getValue().getSize().equals(size)
-                    && s.getValue().getCottonPart() == cottonPart
-                    && s.getValue().getQuantity() >= quantity) {
-                int qtn = s.getValue().getQuantity() - quantity;
-                List<Transaction> transactions = s.getValue().getTransactions();
-                transactions.add(new Transaction(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), Type.OUT, quantity));
-                long key = s.getKey();
-                socksMap.put(key, new Sock(color, size, cottonPart, qtn, transactions));
-                saveData();
-            } else {
-                throw new NotFoundException("Таких носков нет на складе");
-            }
-        }
-    }
-
-
-    @Override
-    public int getQuantityByColorByCottonPartMin(Color color, int cottonPartMin, int cottonPartMax) {
+    public int getQuantityByColorByCottonPartMin(Color color, Size size, int cottonPartMin, int cottonPartMax) {
         int count = 0;
         List<Sock> sockList = socksMap.entrySet()
                 .stream()
@@ -105,8 +117,9 @@ public class WarehouseServiceImpl implements WarehouseService {
                         (sock.getValue()
                                 .getColor()
                                 .equals(color) &&
-                                sock.getValue().getCottonPart() >= cottonPartMin &&
-                                sock.getValue().getCottonPart() <= cottonPartMax))
+                                sock.getValue().getSize().equals(size) &&
+                                (sock.getValue().getCottonPart() >= cottonPartMin &&
+                                        sock.getValue().getCottonPart() <= cottonPartMax)))
                 .map((Map.Entry::getValue))
                 .collect(Collectors.toList());
         for (int i = 0; i < sockList.size(); i++) {

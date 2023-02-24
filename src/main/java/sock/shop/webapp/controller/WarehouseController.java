@@ -22,7 +22,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,41 +48,7 @@ public class WarehouseController {
         return ResponseEntity.ok(sock);
     }
 
-    @PutMapping
-    @Operation(
-            summary = "Добавление количества носков на склад",
-            description = "Пользователь должен заполнть все обязательные поля"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Такая пара носок найдена",
-                    content = {@Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Sock.class))}
 
-            )})
-    public ResponseEntity<Void> updateSock(@RequestParam Color color, @RequestParam Size size, @RequestParam int cottonPart, @RequestParam int quantity) {
-        warehouseService.updateSocks(color, size, cottonPart, quantity);
-        return ResponseEntity.ok().build();
-    }
-
-
-    @GetMapping()
-    @Operation(
-            summary = "Получение всего списка носков",
-            description = "Будет выведеен список всех носков из базы данных"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Носки найдены",
-                    content = {@Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Sock.class))}
-            )})
-    public Collection<Sock> getSocks() {
-        return this.warehouseService.getSocks();
-
-    }
 
     @GetMapping("/socks-quantity")
     @Operation(
@@ -96,14 +61,14 @@ public class WarehouseController {
                     description = "Носки с такими параметрами посчитаны"
             )
     })
-    public ResponseEntity<Integer> getSocksByColorCottonPartMinMax(@RequestParam Color color, @RequestParam int min, @RequestParam int max) {
-        return ResponseEntity.ok(warehouseService.getQuantityByColorByCottonPartMin(color, min, max));
+    public ResponseEntity<Integer> getSocksByColorCottonPartMinMax(@RequestParam Color color, @RequestParam Size size, @RequestParam int min, @RequestParam int max) {
+        return ResponseEntity.ok(warehouseService.getQuantityByColorByCottonPartMin(color, size, min, max));
     }
 
     @PutMapping("/transfer")
     @Operation(
             summary = "Выдача носков со склада",
-            description = "Пользователь должен ввести цвет, min, max количество хлопка в состваве"
+            description = "Пользователь должен ввести цвет,размер, min, max количество хлопка в состваве"
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -111,14 +76,12 @@ public class WarehouseController {
                     description = "Носки выданы"
             )
     })
-    public ResponseEntity<Void> transferSocksFromWarehouse(@RequestParam Color color, @RequestParam Size size,
-                                                           @RequestParam int cottonPart,
-                                                           @RequestParam int quantity) {
-        warehouseService.transferSockFromWarehouse(color, size, cottonPart, quantity);
+    public ResponseEntity<Void> transferSocksFromWarehouse(@Valid @RequestBody Sock sock) {
+        warehouseService.transferSockFromWarehouse(sock);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/recycling")
+    @DeleteMapping
     @Operation(
             summary = "Удаление носков со склада",
             description = "Пользователь должен ввести цвет, min, max количество хлопка в состваве"
@@ -129,13 +92,10 @@ public class WarehouseController {
                     description = "Носки удалены"
             )
     })
-    public ResponseEntity<Void> deleteSocksFromWarehouse(@RequestParam Color color, @RequestParam Size size,
-                                                         @RequestParam int cottonPart,
-                                                         @RequestParam int quantity) {
-        warehouseService.transferSockFromWarehouse(color, size, cottonPart, quantity);
+    public ResponseEntity<Void> deleteSocksFromWarehouse(@Valid @RequestBody Sock sock) {
+        warehouseService.transferSockFromWarehouse(sock);
         return ResponseEntity.ok().build();
     }
-
 
     @GetMapping("/export-report")
     public ResponseEntity<Object> getSocksList() {
@@ -155,4 +115,5 @@ public class WarehouseController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
 }

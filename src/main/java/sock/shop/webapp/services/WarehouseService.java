@@ -13,14 +13,9 @@ import java.util.Collection;
 public interface WarehouseService {
     Sock addSocks(Sock sock);
 
+    void transferSockFromWarehouse(Sock sock);
 
-    void updateSocks(Color color, Size size, int cottonPart, int quantity);
-
-    Collection<Sock> getSocks();
-
-    void transferSockFromWarehouse(Color color, Size size, int cottonPart, int quantity);
-
-    int getQuantityByColorByCottonPartMin(Color color, int cottonPartMin, int cottonPartMax);
+    int getQuantityByColorByCottonPartMin(Color color, Size size, int cottonPartMin, int cottonPartMax);
 
     Path createListOfSocksWithTransactions() throws IOException;
 }
