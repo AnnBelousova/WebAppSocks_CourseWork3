@@ -50,9 +50,9 @@ public class WarehouseController {
 
 
 
-    @GetMapping("/socks-quantity")
+    @GetMapping
     @Operation(
-            summary = "Получение количества пар носков по цвету и min/max количества хлопка в составе.",
+            summary = "Получение количества пар носков по цвету, размеру и min/max количества хлопка в составе.",
             description = "Пользователь должен ввести цвет, min, max количество хлопка в состваве"
     )
     @ApiResponses(value = {
@@ -65,7 +65,7 @@ public class WarehouseController {
         return ResponseEntity.ok(warehouseService.getQuantityByColorByCottonPartMin(color, size, min, max));
     }
 
-    @PutMapping("/transfer")
+    @PutMapping
     @Operation(
             summary = "Выдача носков со склада",
             description = "Пользователь должен ввести цвет,размер, min, max количество хлопка в состваве"

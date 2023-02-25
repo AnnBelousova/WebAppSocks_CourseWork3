@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import sock.shop.webapp.exception.ExceptionThrowFilesProcessing;
+import sock.shop.webapp.exception.FilesProcessingException;
 import sock.shop.webapp.services.FileService;
 
 import java.io.File;
@@ -43,7 +43,7 @@ public class FileServiceImpl implements FileService {
             return Files.readString(path);
         } catch (IOException e) {
             e.printStackTrace();
-            throw new ExceptionThrowFilesProcessing("Файл не прочитан");
+            throw new FilesProcessingException("Файл не прочитан");
         }
     }
 
@@ -82,7 +82,7 @@ public class FileServiceImpl implements FileService {
             return ResponseEntity.ok().build();
         } catch (IOException e) {
             e.printStackTrace();
-            throw new ExceptionThrowFilesProcessing("Файл не сохранен");
+            throw new FilesProcessingException("Файл не сохранен");
         }
     }
 
